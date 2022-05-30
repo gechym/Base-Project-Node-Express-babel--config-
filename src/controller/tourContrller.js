@@ -11,7 +11,6 @@ export const getTours = (req, res) => {
     });
 };
 export const getTour = (req, res) => {
-    console.log(req.body);
     res.status(200).json({ ...req.body, id: req.params.id });
 };
 

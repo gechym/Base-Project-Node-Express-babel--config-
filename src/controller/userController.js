@@ -50,3 +50,27 @@ export const deleteUser = (req, res) => {
         },
     });
 };
+
+// middleware
+export const checkBodyPaser = (req, res, next) => {
+    const { name, price } = req.body;
+    if (!name || !price) {
+        return res.status(404).json({
+            message: 'missing data name and price',
+        });
+    }
+
+    next();
+};
+
+export const checkIdUser = (req, res, next, val) => {
+    if (val > 200) {
+        res.status(404).json({
+            message: 'id is not invalid',
+        });
+
+        return;
+    }
+
+    next();
+};
