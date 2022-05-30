@@ -2,11 +2,20 @@ import { Tour } from '../module';
 
 export const getTours = async (req, res) => {
     try {
-        const tours = await Tour.find();
+        const queryObj = req.query;
+
+        //lọc các query ko liên quan
+        const excludedQuery = ['page', 'sort', 'limit', 'fields'];
+        excludedQuery.forEach((el) => delete queryObj[el]);
+
+        const query = Tour.find(queryObj);
+
+        const tours = await query;
 
         res.status(200).json({
             message: 'success',
             requestTime: req.requestTime,
+            result: tours.length,
             data: {
                 tours: tours,
             },
@@ -64,7 +73,6 @@ export const updateTour = async (req, res) => {
             new: true,
             runValidators: true,
         });
-        // const data = await Tour.findOne({ name: id });
 
         res.status(200).json({
             message: 'success',
