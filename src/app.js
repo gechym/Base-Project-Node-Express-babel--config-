@@ -1,5 +1,9 @@
 require('dotenv').config({ path: './config.env' });
 import express from 'express';
+import morgan from 'morgan';
+
+import { tourRouter, userRouter } from './routes';
+
 const app = express();
 
 //config
@@ -11,45 +15,16 @@ app.use(
 );
 app.use(express.static(`${__dirname}/public`)); // khai các file
 
-const getTours = (req, res) => {
-    res.status(200).json({
-        message: 'success',
-        data: [
-            {
-                id: 0,
-                name: 'The Forest Hiker',
-            },
-        ],
-    });
-};
-const getTour = (req, res) => {
-    console.log(req.body);
-    res.status(200).json({ ...req.body, id: req.params.id });
-};
+app.use(morgan('dev'));
 
-const createTour = (req, res) => {
-    res.status(200).json({
-        message: 'success',
-        data: {
-            tours: req.body,
-        },
-    });
-};
+app.use((req, res, next) => {
+    console.log('hello middleware 😘');
+    req.requestTime = new Date().toISOString();
+    next();
+});
 
-const updateTour = (req, res) => {
-    const { id } = req.params;
-
-    res.status(200).json({
-        message: 'update success',
-        data: {
-            id,
-            ...req.body,
-        },
-    });
-};
-
-app.route('/api/v1/tours').get(getTours).post(createTour);
-app.route('/api/v1/tours/:id').get(getTour).put(updateTour);
+app.use('/api/v1/tours', tourRouter);
+app.use('/api/v1/users', userRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
