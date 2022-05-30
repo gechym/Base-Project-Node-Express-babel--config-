@@ -1,14 +1,9 @@
 import { Tour } from '../module';
+import APIfeature from '../util/APIfeature';
 
 export const getTours = async (req, res) => {
     try {
-        const queryObj = req.query;
-
-        //lọc các query ko liên quan
-        const excludedQuery = ['page', 'sort', 'limit', 'fields'];
-        excludedQuery.forEach((el) => delete queryObj[el]);
-
-        const query = Tour.find(queryObj);
+        const { query, countData } = await APIfeature(req.query, Tour);
 
         const tours = await query;
 
@@ -16,6 +11,7 @@ export const getTours = async (req, res) => {
             message: 'success',
             requestTime: req.requestTime,
             result: tours.length,
+            count: countData,
             data: {
                 tours: tours,
             },
