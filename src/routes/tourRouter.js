@@ -5,11 +5,11 @@ import {
     getTours,
     deleteTour,
     updateTour,
-    checkBodyPaser,
+    checkBodyParser,
 } from '../controller';
 const tourRouter = express.Router();
 
-tourRouter.route('/').get(getTours).post(checkBodyPaser, createTour);
+tourRouter.route('/').get(getTours).post(checkBodyParser, createTour);
 tourRouter.route('/:id').get(getTour).put(updateTour).delete(deleteTour);
 
 export default tourRouter;
