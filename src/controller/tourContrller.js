@@ -45,6 +45,7 @@ export const getTour = async (req, res) => {
 
 export const createTour = async (req, res) => {
     try {
+        console.log('1');
         const data = await Tour.create(req.body);
         res.status(200).json({
             message: 'success',
@@ -54,7 +55,6 @@ export const createTour = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error.message);
         res.status(404).json({
             message: error.message,
         });
@@ -170,6 +170,13 @@ export const getTourMonthLyPlan = async (req, res) => {
                 minPrice: { $min: '$price' },
                 maxPrice: { $max: '$price' },
                 numTours: { $sum: 1 },
+                day: {
+                    $push: {
+                        $dayOfMonth: {
+                            $toDate: '$startDates',
+                        },
+                    },
+                },
                 tour: { $push: '$name' }, // $push đẩy vào một array
             },
         },
