@@ -10,6 +10,10 @@ const tourSchema = new mongoose.Schema(
             trim: true,
         },
         slug: String,
+        secretTour: {
+            type: Boolean,
+            default: false,
+        },
         duration: {
             type: Number,
             required: [true, 'tour must have durations'],
@@ -69,14 +73,34 @@ const tourSchema = new mongoose.Schema(
 );
 
 // midlewave schema
+//controller chạy trước middle wave này chạy sau
 tourSchema.pre('save', function (next) {
+    console.log('---------Save data------------');
     console.log('👉 will save data ... ', this);
     this.slug = slug(this.name, { trim: true, lower: true });
     next();
 });
 
 tourSchema.post('save', function (doc, next) {
+    // khi save xong thì chạy
     console.log(doc);
+    console.log('save success');
+    console.log('-------------------------- \n\n\n\n');
+    next();
+});
+
+//middlewave query schema controller chạy trước middle wave này chạy sau
+tourSchema.pre(/^find/, function (next) {
+    console.log('-------- Query data ----------------');
+    this.find({ secretTour: { $ne: true } });
+    this.start = Date.now();
+    next();
+});
+
+tourSchema.post(/^find/, function (doc, next) {
+    // khi save xong thì chạy
+    console.log(`Query mất ${Date.now() - this.start}ms`);
+    console.log('--------  ----------------\n\n\n\n');
     next();
 });
 

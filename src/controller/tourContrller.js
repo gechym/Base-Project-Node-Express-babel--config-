@@ -3,6 +3,7 @@ import APIfeature from '../util/APIfeature';
 
 export const getTours = async (req, res) => {
     try {
+        console.log('2');
         const { query, countData } = await APIfeature(req.query, Tour);
 
         const tours = await query;
