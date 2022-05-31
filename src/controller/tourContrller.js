@@ -153,8 +153,10 @@ export const getTourMonthLyPlan = async (req, res) => {
             $match: {
                 // Chọn Theo điều kiện
                 startDates: {
-                    $gte: new Date(`${year}-01-01`).toISOString(),
-                    $lte: new Date(`${year}-12-31`).toISOString(),
+                    $gte: new Date(`${year}-01-01`),
+                    $lte: new Date(`${year}-12-31`),
+                    // $gte: new Date(`${year}-01-01`).toISOString(),
+                    // $lte: new Date(`${year}-12-31`).toISOString(),
                 },
             },
         },
@@ -192,6 +194,13 @@ export const getTourMonthLyPlan = async (req, res) => {
                 month: 1,
             },
         },
+        // { được config bên middleware
+        //     $match: {
+        //         secretTour: {
+        //             $ne: true,
+        //         },
+        //     },
+        // },
     ]);
 
     res.status(200).json({

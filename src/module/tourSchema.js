@@ -104,4 +104,31 @@ tourSchema.post(/^find/, function (doc, next) {
     next();
 });
 
+// Aggregation Middleware
+tourSchema.pre('aggregate', function (next) {
+    console.log('-------- aggregation ----------------');
+    this._pipeline = [
+        // put thêm Aggregate vào đầu mảng để tránh hiện tour ẩn danh
+        {
+            $match: {
+                secretTour: {
+                    $ne: true,
+                },
+            },
+        },
+        ...this._pipeline,
+    ];
+
+    console.log(this.pipeline());
+    this.start = Date.now();
+    next();
+});
+
+tourSchema.post('aggregate', function (doc, next) {
+    // khi save xong thì chạy
+    console.log(`Query mất ${Date.now() - this.start}ms`);
+    console.log('--------  ----------------\n\n\n\n');
+    next();
+});
+
 export default mongoose.model('Tour', tourSchema);
