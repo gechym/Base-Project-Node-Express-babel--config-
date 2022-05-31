@@ -125,6 +125,7 @@ export const getTourStats = async (req, res) => {
                     avgPrice: { $avg: '$price' },
                     minPrice: { $min: '$price' },
                     maxPrice: { $max: '$price' },
+                    tour: { $push: '$name' },
                 },
             },
         ]);
@@ -139,4 +140,56 @@ export const getTourStats = async (req, res) => {
             message: error.message,
         });
     }
+};
+
+export const getTourMonthLyPlan = async (req, res) => {
+    const year = req.query.year;
+    const stats = await Tour.aggregate([
+        {
+            $unwind: '$startDates', // startDates là một mảng các ngày và sẽ được tách ra và các trường theo nó giống nhau
+        },
+        {
+            $match: {
+                // Chọn Theo điều kiện
+                startDates: {
+                    $gte: new Date(`${year}-01-01`).toISOString(),
+                    $lte: new Date(`${year}-12-31`).toISOString(),
+                },
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    $month: {
+                        $toDate: '$startDates',
+                    },
+                },
+                numRatings: { $sum: '$ratingsQuantity' }, // tổng
+                avgRating: { $avg: '$ratingsAverage' }, // giá trị trung bình
+                avgPrice: { $avg: '$price' },
+                minPrice: { $min: '$price' },
+                maxPrice: { $max: '$price' },
+                numTours: { $sum: 1 },
+                tour: { $push: '$name' }, // $push đẩy vào một array
+            },
+        },
+        {
+            $addFields: { month: '$_id' },
+        },
+        {
+            $project: { _id: 0 }, // ẩn trường id
+        },
+        {
+            $sort: {
+                month: 1,
+            },
+        },
+    ]);
+
+    res.status(200).json({
+        message: 'success',
+        data: {
+            stats: stats,
+        },
+    });
 };
