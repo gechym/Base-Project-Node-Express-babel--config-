@@ -8,6 +8,8 @@ const tourSchema = new mongoose.Schema(
             required: [true, 'tour must have name'],
             unique: true,
             trim: true,
+            maxlength: [40, 'Tên ko quá 40 chữ '],
+            minLength: [10, 'tối thiểu 10 chữ nha'],
         },
         slug: String,
         secretTour: {
@@ -26,10 +28,16 @@ const tourSchema = new mongoose.Schema(
             type: String,
             required: [true, 'tour must have difficulity'],
             trim: true,
+            emun: {
+                values: ['easy', 'medium', 'difficult'],
+                message: 'có chừng đó mấy thêm nhiều làm gì :p',
+            },
         },
         rating: {
             type: Number,
             default: 4.5,
+            min: [1, 'ai lại đánh giáo 0 sao :))'],
+            max: [5, '5 sao thôi làm gì có hơn mà đánh giá bro'],
         },
         ratingsAverage: {
             type: Number,
@@ -43,7 +51,15 @@ const tourSchema = new mongoose.Schema(
             type: Number,
             required: [true, 'tour must have a price'],
         },
-        priceDiscount: Number,
+        priceDiscount: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    return val < this.price;
+                },
+                message: 'Không làm mà đòi có ăn wtf',
+            },
+        },
         summary: {
             type: String,
             trim: true,
