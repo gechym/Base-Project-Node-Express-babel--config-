@@ -109,3 +109,34 @@ export const checkBodyParser = (req, res, next) => {
 
     next();
 };
+
+export const getTourStats = async (req, res) => {
+    try {
+        const stats = await Tour.aggregate([
+            {
+                $match: { ratingsAverage: { $gte: 4.5 } },
+            },
+            {
+                $group: {
+                    _id: null,
+                    numTours: { $sum: 1 }, // Tổng các fileds khí nó tổng hợp
+                    numRatings: { $sum: '$ratingsQuantity' }, // tổng
+                    avgRating: { $avg: '$ratingsAverage' }, // giá trị trung bình
+                    avgPrice: { $avg: '$price' },
+                    minPrice: { $min: '$price' },
+                    maxPrice: { $max: '$price' },
+                },
+            },
+        ]);
+        res.status(200).json({
+            message: 'success',
+            data: {
+                stats: stats,
+            },
+        });
+    } catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+};
