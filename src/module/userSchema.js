@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 
+import bcryptjs from 'bcryptjs';
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -21,11 +23,30 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'ê xin cái pass'],
         minLength: 8,
+        select: false,
     },
     passwordConfig: {
         type: String,
         required: [true, 'nhập lại pass nào'],
+        validate: {
+            validator: function (val) {
+                return this.password === val;
+            },
+
+            message: 'Passconfig ko giống nhau',
+        },
     },
 });
+
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+
+    this.password = await bcryptjs.hash(this.password, 12);
+    this.passwordConfig = undefined;
+});
+
+userSchema.methods.checkPassword = async (passUserInput, passInDatabase) => {
+    return await bcryptjs.compare(passUserInput, passInDatabase);
+};
 
 export default mongoose.model('user', userSchema);
