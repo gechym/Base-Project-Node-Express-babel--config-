@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
+import crypto from 'crypto';
 
 import { User } from '../module';
 import AppError from '../util/AppError';
@@ -20,12 +21,9 @@ const createToken = (newUser) => {
 };
 
 export const signUp = catchAsync(async (req, res, next) => {
-    const { name, password, email, passwordConfig, passwordChangeAt } =
-        req.body;
+    const { name, password, email, passwordConfig, passwordChangeAt } = req.body;
     if (!name || !email || !password || !passwordConfig) {
-        return next(
-            new AppError('Vui lòng cung cấp đầy đủ thông tin nha', 404),
-        );
+        return next(new AppError('Vui lòng cung cấp đầy đủ thông tin nha', 404));
     }
 
     const newUser = await User.create({
@@ -52,8 +50,7 @@ export const signUp = catchAsync(async (req, res, next) => {
 export const login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
 
-    if (!email || !password)
-        return next(new AppError('Vui lòng cung cấp email và password', 404));
+    if (!email || !password) return next(new AppError('Vui lòng cung cấp email và password', 404));
 
     const user = await User.findOne({
         email: email,
@@ -76,9 +73,7 @@ export const ruleAccect =
     (...rules) =>
     (req, res, next) => {
         if (!rules.includes(req.user.rule)) {
-            return next(
-                new AppError('Bạn ko có quyền truy cập tài nguyên này', 404),
-            );
+            return next(new AppError('Bạn ko có quyền truy cập tài nguyên này', 404));
         }
 
         next();
@@ -108,9 +103,7 @@ export const protect = catchAsync(async (req, res, next) => {
     // check user
     const currentUser = await User.findById(decode.id);
     if (!currentUser) {
-        return next(
-            new AppError('Lỗi xác thực danh tính ,Vui lòng đăng nhập lại', 404),
-        );
+        return next(new AppError('Lỗi xác thực danh tính ,Vui lòng đăng nhập lại', 404));
     }
 
     // check đổi pass khi token còn hạn => bắt user login lại
@@ -140,9 +133,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     try {
-        const resetURL = `${req.protocol}://${req.get(
-            'host',
-        )}/api/users/v1/resetPassword/${tokenReset}`;
+        const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/reset-password/${tokenReset}`;
         const message = `Forgot your Password? Submit PATH request with your new password and confirm to:
                     ${resetURL}. \n
                     If you didt'n forget your password , please ignore this email.
@@ -157,6 +148,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
         res.status(200).json({
             message: 'success',
             data: {
+                tokenReset: tokenReset, // TEST
                 tokenReset: tokenReset,
             },
         });
@@ -165,10 +157,33 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
         user.passwordResetToken = undefined;
         await user.save({ validateBeforeSave: false });
 
-        return next(new AppError('send email failed ' + error.message, 401));
+        return next(new AppError(error.message, 401));
     }
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {
-    next();
+    const { token } = req.params;
+    const { password, passwordConfig } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) return next(new AppError('token không chính xác vui lòng kiểm tra email lại'));
+
+    user.password = password;
+    user.passwordConfig = passwordConfig;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.passwordChangeAt = Date.now() + 1000; // bắt người dùng đăng nhập lại
+
+    await user.save();
+    const tokenjwt = createToken(user);
+
+    res.status(200).json({
+        message: 'success',
+        tokenjwt,
+    });
 });
