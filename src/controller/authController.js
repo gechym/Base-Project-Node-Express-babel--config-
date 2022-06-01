@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
 
@@ -126,5 +125,27 @@ export const protect = catchAsync(async (req, res, next) => {
     // đẩy user lên req để sử dụng cho các router khác hoặc trả về clier
     req.user = currentUser;
 
+    next();
+});
+
+export const forgotPassword = catchAsync(async (req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) return next(new AppError('Vui lòng cung cấp email'));
+    const user = await User.findOne({ email });
+
+    if (!user) return next(new AppError('Không tồn tại người dùng'));
+    const tokenReset = user.createPasswordresetToken();
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        message: 'success',
+        data: {
+            tokenReset: tokenReset,
+        },
+    });
+});
+
+export const resetPassword = catchAsync(async (req, res, next) => {
     next();
 });

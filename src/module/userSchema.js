@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import validator from 'validator';
 
 import bcryptjs from 'bcryptjs';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -45,9 +46,12 @@ const userSchema = new mongoose.Schema({
         },
     },
     passwordChangeAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
 });
 
 userSchema.pre('save', async function (next) {
+    console.log('check');
     if (!this.isModified('password')) return next();
 
     this.password = await bcryptjs.hash(this.password, 12);
@@ -63,6 +67,18 @@ userSchema.methods.changedPasswordAfter = function (JWTtimestamp) {
         return JWTtimestamp < this.passwordChangeAt.getTime();
     }
     return false;
+};
+
+userSchema.methods.createPasswordresetToken = function () {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    this.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex'); // mã hóa token
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // tạo thời hạn cho token có hiệu lực là 10p
+
+    return resetToken;
 };
 
 export default mongoose.model('user', userSchema);
