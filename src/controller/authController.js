@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import { User } from '../module';
 import AppError from '../util/AppError';
 import catchAsync from '../util/catchAsync';
+import emailService from '../util/email';
 
 const createToken = (newUser) => {
     return jwt.sign(
@@ -138,12 +139,34 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     const tokenReset = user.createPasswordresetToken();
     await user.save({ validateBeforeSave: false });
 
-    res.status(200).json({
-        message: 'success',
-        data: {
-            tokenReset: tokenReset,
-        },
-    });
+    try {
+        const resetURL = `${req.protocol}://${req.get(
+            'host',
+        )}/api/users/v1/resetPassword/${tokenReset}`;
+        const message = `Forgot your Password? Submit PATH request with your new password and confirm to:
+                    ${resetURL}. \n
+                    If you didt'n forget your password , please ignore this email.
+                `;
+
+        await emailService({
+            to: user.email,
+            subject: 'resetPassword',
+            message: message,
+        });
+
+        res.status(200).json({
+            message: 'success',
+            data: {
+                tokenReset: tokenReset,
+            },
+        });
+    } catch (error) {
+        user.passwordResetExpires = undefined;
+        user.passwordResetToken = undefined;
+        await user.save({ validateBeforeSave: false });
+
+        return next(new AppError('send email failed ' + error.message, 401));
+    }
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {
