@@ -19,7 +19,12 @@ app.use(express.static(`${__dirname}/public`)); // khai các file
 app.use(morgan('dev'));
 
 app.use((req, res, next) => {
-    console.log('hello middleware 😘');
+    console.log('\n\n\n\n\n\n');
+
+    console.log('hello middleware 😘 \n\n\n');
+
+    console.log(req.headers);
+
     req.requestTime = new Date().toISOString();
     next();
 });

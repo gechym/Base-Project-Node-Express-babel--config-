@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
             message: 'Passconfig ko giống nhau',
         },
     },
+    passwordChangeAt: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -47,6 +48,13 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods.checkPassword = async (passUserInput, passInDatabase) => {
     return await bcryptjs.compare(passUserInput, passInDatabase);
+};
+
+userSchema.methods.changedPasswordAfter = function (JWTtimestamp) {
+    if (this.passwordChangeAt) {
+        return JWTtimestamp < this.passwordChangeAt.getTime();
+    }
+    return false;
 };
 
 export default mongoose.model('user', userSchema);

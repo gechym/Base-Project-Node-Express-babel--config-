@@ -1,4 +1,6 @@
+import { Console } from 'console';
 import jwt from 'jsonwebtoken';
+import { promisify } from 'util';
 
 import { User } from '../module';
 import AppError from '../util/AppError';
@@ -18,12 +20,21 @@ const createToken = (newUser) => {
 };
 
 export const signUp = catchAsync(async (req, res, next) => {
-    const { name, password, email, passwordConfig } = req.body;
+    const { name, password, email, passwordConfig, passwordChangeAt } =
+        req.body;
     if (!name || !email || !password || !passwordConfig) {
-        return next(new AppError('Vui lòng cung cấp đầy đủ thông tin nha', 404));
+        return next(
+            new AppError('Vui lòng cung cấp đầy đủ thông tin nha', 404),
+        );
     }
 
-    const newUser = await User.create({ name, email, password, passwordConfig });
+    const newUser = await User.create({
+        name,
+        email,
+        password,
+        passwordConfig,
+        passwordChangeAt,
+    });
 
     const token = createToken(newUser);
 
@@ -44,7 +55,9 @@ export const login = catchAsync(async (req, res, next) => {
     if (!email || !password)
         return next(new AppError('Vui lòng cung cấp email và password', 404));
 
-    const user = await User.findOne({ email: email }).select('+password');
+    const user = await User.findOne({
+        email: email,
+    }).select('+password');
 
     if (!user) return next(new AppError('User không tồn tại', 404));
 
@@ -57,4 +70,48 @@ export const login = catchAsync(async (req, res, next) => {
         message: 'success',
         token: token,
     });
+});
+
+export const protect = catchAsync(async (req, res, next) => {
+    // lấy token
+    const { authorization } = req.headers;
+    let token;
+
+    if (authorization && authorization.startsWith('Bearer')) {
+        token = authorization.split(' ')[1];
+    }
+
+    if (!token) return next(new AppError('Bạn chưa đăng nhập', 404));
+
+    // verify token
+    let decode = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
+    decode = {
+        ...decode,
+        decode_iat: new Date(decode.iat * 1000).toLocaleString(),
+        decode_exp: new Date(decode.exp * 1000).toLocaleString(),
+    };
+    console.log(decode);
+
+    // check user
+    const user = await User.findById(decode.id);
+    if (!user) {
+        return next(
+            new AppError('Lỗi xác thực danh tính ,Vui lòng đăng nhập lại', 404),
+        );
+    }
+
+    // check đổi pass khi token còn hạn => bắt user login lại
+
+    if (user.changedPasswordAfter(decode.iat * 1000))
+        return next(
+            new AppError(
+                `Bạn mới đổi mật khẩu ngày ${user.passwordChangeAt.toLocaleString()} vui lòng đăng nhập lại`,
+                404,
+            ),
+        );
+
+    // đẩy user lên req để sử dụng cho các router khác hoặc trả về clier
+    req.user = user;
+
+    next();
 });

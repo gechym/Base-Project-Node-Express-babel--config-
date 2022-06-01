@@ -8,13 +8,14 @@ import {
     checkBodyParser,
     getTourStats,
     getTourMonthLyPlan,
+    protect,
 } from '../controller';
 const tourRouter = express.Router();
 
 tourRouter.route('/tour-stats').get(getTourStats);
 tourRouter.route('/tour-monthly-plan').get(getTourMonthLyPlan);
 
-tourRouter.route('/').get(getTours).post(checkBodyParser, createTour);
+tourRouter.route('/').get(protect, getTours).post(checkBodyParser, createTour);
 tourRouter.route('/:id').get(getTour).put(updateTour).delete(deleteTour);
 
 export default tourRouter;
