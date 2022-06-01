@@ -16,6 +16,14 @@ const userSchema = new mongoose.Schema({
         unique: true,
         validate: [validator.isEmail, 'không phải email chế ơi'],
     },
+    rule: {
+        type: String,
+        emun: {
+            values: ['user', 'admin', 'guider'],
+            message: 'chỉ tồn tại user, admin, guider',
+        },
+        default: 'user',
+    },
     photo: {
         type: String,
     },
