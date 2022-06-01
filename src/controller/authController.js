@@ -146,10 +146,9 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
         });
 
         res.status(200).json({
-            message: 'success',
+            message: 'success token được gửi về Email vui lòng kiểm tra',
             data: {
                 tokenReset: tokenReset, // TEST
-                tokenReset: tokenReset,
             },
         });
     } catch (error) {
@@ -186,4 +185,21 @@ export const resetPassword = catchAsync(async (req, res, next) => {
         message: 'success',
         tokenjwt,
     });
+});
+
+export const updatePassword = AsyncCatch(async (req, res, next) => {
+    // 1 get user
+    const user = await User.findById(req.user.id).select('+password');
+    //2 check if posted current password is correct
+    console.log(req.body);
+    const checkPasswordCurrent = await user.correctPassword(req.body.currentPassword, user.password);
+    if (!checkPasswordCurrent) {
+        return next(new AppError('your current password is wrong !', 400));
+    }
+    //3 if so, update password
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save();
+    // 4 send token info
+    createSendToken(user, 201, res);
 });
