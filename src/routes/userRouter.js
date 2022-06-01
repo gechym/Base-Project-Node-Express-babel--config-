@@ -22,7 +22,7 @@ userRouter.route('/signup').post(signUp);
 userRouter.route('/login').post(login);
 userRouter.route('/forgot-password').post(forgotPassword);
 userRouter.route('/reset-password/:token').patch(resetPassword);
-userRouter.route('/change-password/:token').patch(protect, updatePassword);
+userRouter.route('/change-password').patch(protect, updatePassword);
 
 userRouter.route('/').get(getUsers).post(createUser);
 userRouter.route('/:id').get(getUser).delete(deleteUser).put(updateUser);

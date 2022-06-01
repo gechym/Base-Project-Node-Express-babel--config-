@@ -187,7 +187,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     });
 });
 
-export const updatePassword = AsyncCatch(async (req, res, next) => {
+export const updatePassword = catchAsync(async (req, res, next) => {
     // 1 get user
     const user = await User.findById(req.user.id).select('+password');
     //2 check if posted current password is correct
