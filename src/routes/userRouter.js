@@ -6,11 +6,14 @@ import {
     getUser,
     getUsers,
     updateUser,
+    signUp,
 } from '../controller';
 
-const userRouter = express.Router();
+const userRouter = express.Router(signUp);
 
 userRouter.param('id', checkIdUser);
+
+userRouter.route('/signup').post(signUp);
 
 userRouter.route('/').get(getUsers).post(createUser);
 userRouter.route('/:id').get(getUser).delete(deleteUser).put(updateUser);

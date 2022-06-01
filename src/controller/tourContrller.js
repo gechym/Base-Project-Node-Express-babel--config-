@@ -1,5 +1,6 @@
 import { Tour } from '../module';
 import APIfeature from '../util/APIfeature';
+import AppError from '../util/AppError';
 import catchAsync from '../util/catchAsync';
 
 export const getTours = catchAsync(async (req, res, next) => {
@@ -18,9 +19,12 @@ export const getTours = catchAsync(async (req, res, next) => {
 });
 export const getTour = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-
     const data = await Tour.findById(id);
-    // const data = await Tour.findOne({ name: id });
+    // const data = await Tour.findOne({ id: id });
+
+    if (!data) {
+        return next(new AppError('Ko có tour nòa oh shit!!', 404));
+    }
 
     res.status(200).json({
         message: 'success',
