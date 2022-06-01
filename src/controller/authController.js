@@ -77,6 +77,7 @@ export const protect = catchAsync(async (req, res, next) => {
     const { authorization } = req.headers;
     let token;
 
+    //https://anonystick.com/blog-developer/bearer-token-la-gi-neu-khong-co-bearer-truoc-token-2021052140045637#:~:text=Theo%20c%C3%A1c%20t%C3%A0i%20li%E1%BB%87u%20th%C3%AC,lu%C3%B4n%20mang%20theo%20token%20n%C3%A0y.
     if (authorization && authorization.startsWith('Bearer')) {
         token = authorization.split(' ')[1];
     }
@@ -93,8 +94,8 @@ export const protect = catchAsync(async (req, res, next) => {
     console.log(decode);
 
     // check user
-    const user = await User.findById(decode.id);
-    if (!user) {
+    const currentUser = await User.findById(decode.id);
+    if (!currentUser) {
         return next(
             new AppError('Lỗi xác thực danh tính ,Vui lòng đăng nhập lại', 404),
         );
@@ -102,16 +103,16 @@ export const protect = catchAsync(async (req, res, next) => {
 
     // check đổi pass khi token còn hạn => bắt user login lại
 
-    if (user.changedPasswordAfter(decode.iat * 1000))
+    if (currentUser.changedPasswordAfter(decode.iat * 1000))
         return next(
             new AppError(
-                `Bạn mới đổi mật khẩu ngày ${user.passwordChangeAt.toLocaleString()} vui lòng đăng nhập lại`,
+                `Bạn mới đổi mật khẩu ngày ${currentUser.passwordChangeAt.toLocaleString()} vui lòng đăng nhập lại`,
                 404,
             ),
         );
 
     // đẩy user lên req để sử dụng cho các router khác hoặc trả về clier
-    req.user = user;
+    req.user = currentUser;
 
     next();
 });
