@@ -188,18 +188,26 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 });
 
 export const updatePassword = catchAsync(async (req, res, next) => {
-    // 1 get user
+    const { currentPassword, password, passwordConfig } = req.body;
+
     const user = await User.findById(req.user.id).select('+password');
-    //2 check if posted current password is correct
-    console.log(req.body);
-    const checkPasswordCurrent = await user.correctPassword(req.body.currentPassword, user.password);
+
+    const checkPasswordCurrent = await user.checkPassword(currentPassword, user.password);
+
     if (!checkPasswordCurrent) {
-        return next(new AppError('your current password is wrong !', 400));
+        return next(new AppError('pass hiện tại không đúng !', 400));
     }
-    //3 if so, update password
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
+
+    user.password = password;
+    user.passwordConfig = passwordConfig;
+    user.passwordChangeAt = Date.now() + 1000;
+
     await user.save();
     // 4 send token info
-    createSendToken(user, 201, res);
+    const token = createToken(user);
+
+    res.status(200).json({
+        message: 'success',
+        token,
+    });
 });
