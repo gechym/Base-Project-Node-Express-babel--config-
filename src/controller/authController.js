@@ -161,10 +161,10 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {
-    const { token } = req.params;
+    const { token: tokenCrypto } = req.params;
     const { password, passwordConfig } = req.body;
 
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = crypto.createHash('sha256').update(tokenCrypto).digest('hex');
     const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
@@ -179,11 +179,11 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     user.passwordChangeAt = Date.now() + 1000; // bắt người dùng đăng nhập lại
 
     await user.save();
-    const tokenjwt = createToken(user);
+    const token = createToken(user);
 
     res.status(200).json({
         message: 'success',
-        tokenjwt,
+        token,
     });
 });
 
@@ -203,7 +203,6 @@ export const updatePassword = catchAsync(async (req, res, next) => {
     user.passwordChangeAt = Date.now() + 1000;
 
     await user.save();
-    // 4 send token info
     const token = createToken(user);
 
     res.status(200).json({
