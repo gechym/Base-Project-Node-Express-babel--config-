@@ -16,7 +16,7 @@ const tourRouter = express.Router();
 tourRouter.route('/tour-stats').get(getTourStats);
 tourRouter.route('/tour-monthly-plan').get(getTourMonthLyPlan);
 
-tourRouter.route('/').get(protect, ruleAccect('admin'), getTours).post(checkBodyParser, createTour);
+tourRouter.route('/').get(protect, ruleAccect('user', 'admin'), getTours).post(checkBodyParser, createTour);
 tourRouter.route('/:id').get(getTour).put(updateTour).delete(deleteTour);
 
 export default tourRouter;
