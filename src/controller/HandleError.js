@@ -6,8 +6,6 @@ const handleError = () => (err, req, res, next) => {
 /// │                                                      
 /// │      ${err.stack}                                        
 /// │                                                      
-/// │                                                      
-/// │                                                     
 /// │      {                                  
 /// │        message : ${err.message}                                              
 /// │                                                      

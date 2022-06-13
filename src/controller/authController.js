@@ -35,9 +35,6 @@ export const signUp = catchAsync(async (req, res, next) => {
     });
 
     const token = createToken(newUser);
-
-    console.log(token);
-
     res.status(200).json({
         message: 'success',
         token,
@@ -62,7 +59,6 @@ export const login = catchAsync(async (req, res, next) => {
     if (!checkPassword) return next(new AppError('pass không chính xác', 404));
 
     const token = createToken(user);
-
     res.status(200).json({
         message: 'success',
         token: token,
@@ -165,6 +161,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     const { password, passwordConfig } = req.body;
 
     const hashedToken = crypto.createHash('sha256').update(tokenCrypto).digest('hex');
+
     const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
@@ -176,7 +173,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     user.passwordConfig = passwordConfig;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-    user.passwordChangeAt = Date.now() + 1000; // bắt người dùng đăng nhập lại
+    user.passwordChangeAt = +1000; // bắt người dùng đăng nhập lại
 
     await user.save();
     const token = createToken(user);
